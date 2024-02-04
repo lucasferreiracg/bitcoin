@@ -81,6 +81,10 @@ static const std::array<uint8_t, 6> INTERNAL_IN_IPV6_PREFIX{
     0xFD, 0x6B, 0x88, 0xC0, 0x87, 0x24 // 0xFD + sha256("bitcoin")[0:5].
 };
 
+/// All CJDNS addresses start with 0xFC. See
+/// https://github.com/cjdelisle/cjdns/blob/master/doc/Whitepaper.md#pulling-it-all-together
+static constexpr uint8_t CJDNS_PREFIX{0xFC};
+
 /// Size of IPv4 address (in bytes).
 static constexpr size_t ADDR_IPV4_SIZE = 4;
 
@@ -174,7 +178,7 @@ public:
     [[nodiscard]] bool IsTor() const { return m_net == NET_ONION; }
     [[nodiscard]] bool IsI2P() const { return m_net == NET_I2P; }
     [[nodiscard]] bool IsCJDNS() const { return m_net == NET_CJDNS; }
-    [[nodiscard]] bool HasCJDNSPrefix() const { return m_addr[0] == 0xfc; }
+    [[nodiscard]] bool HasCJDNSPrefix() const { return m_addr[0] == CJDNS_PREFIX; }
     bool IsLocal() const;
     bool IsRoutable() const;
     bool IsInternal() const;
@@ -257,6 +261,18 @@ public:
         }
     }
 
+    /**
+     * BIP155 network ids recognized by this software.
+     */
+    enum BIP155Network : uint8_t {
+        IPV4 = 1,
+        IPV6 = 2,
+        TORV2 = 3,
+        TORV3 = 4,
+        I2P = 5,
+        CJDNS = 6,
+    };
+
     friend class CSubNet;
 
 private:
@@ -277,18 +293,6 @@ private:
      * @see CNetAddr::IsI2P()
      */
     bool SetI2P(const std::string& addr);
-
-    /**
-     * BIP155 network ids recognized by this software.
-     */
-    enum BIP155Network : uint8_t {
-        IPV4 = 1,
-        IPV6 = 2,
-        TORV2 = 3,
-        TORV3 = 4,
-        I2P = 5,
-        CJDNS = 6,
-    };
 
     /**
      * Size of CNetAddr when serialized as ADDRv1 (pre-BIP155) (in bytes).

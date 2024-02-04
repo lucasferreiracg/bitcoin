@@ -28,7 +28,7 @@ struct ReorgTxns {
 static BlockTxns CreateRandomTransactions(size_t num_txns)
 {
     // Ensure every transaction has a different txid by having each one spend the previous one.
-    static uint256 prevout_hash{uint256::ZERO};
+    static Txid prevout_hash{};
 
     BlockTxns txns;
     txns.reserve(num_txns);
@@ -36,8 +36,8 @@ static BlockTxns CreateRandomTransactions(size_t num_txns)
     CScript spk = CScript() << OP_TRUE;
     for (uint32_t i = 0; i < num_txns; ++i) {
         CMutableTransaction tx;
-        tx.vin.emplace_back(CTxIn{COutPoint{prevout_hash, 0}});
-        tx.vout.emplace_back(CTxOut{CENT, spk});
+        tx.vin.emplace_back(COutPoint{prevout_hash, 0});
+        tx.vout.emplace_back(CENT, spk);
         auto ptx{MakeTransactionRef(tx)};
         txns.emplace_back(ptx);
         prevout_hash = ptx->GetHash();
@@ -73,7 +73,7 @@ static ReorgTxns CreateBlocks(size_t num_not_shared)
 
 static void Reorg(const ReorgTxns& reorg)
 {
-    DisconnectedBlockTransactions disconnectpool{MAX_DISCONNECTED_TX_POOL_SIZE * 1000};
+    DisconnectedBlockTransactions disconnectpool{MAX_DISCONNECTED_TX_POOL_BYTES};
     // Disconnect block
     const auto evicted = disconnectpool.AddTransactionsFromBlock(reorg.disconnected_txns);
     assert(evicted.empty());
